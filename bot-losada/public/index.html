@@ -475,7 +475,7 @@ async function sendMessage() {
     }
   } catch(e) {
     removeTyping();
-    addMsg('bot', 'Ocurrió un error al conectar. Llame al +56-9-53703567 o visite www.drlosada.cl');
+    addMsg('bot', 'Error: ' + e.message);. Llame al +56-9-53703567 o visite www.drlosada.cl');
   }
   setLoad(false);
 }
