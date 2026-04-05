@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistente Dr. Antolín Losada</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0a1628; --teal: #0f7fa8; --teal2: #0d6d92; --aqua: #4dd9f5;
+    --white: #ffffff; --bg: #f0f7fb; --border: #d0e8f2;
+    --text: #1a2a3a; --muted: #6b8099; --green: #16a34a;
+  }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: transparent; }
+  #chat-widget { width: 100%; height: 100vh; background: var(--white); border-radius: 16px; box-shadow: 0 4px 32px rgba(10,22,40,.12); display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header { background: linear-gradient(120deg,var(--navy),#0c2d52); padding: 14px 16px 12px; flex-shrink: 0; }
+  .hrow { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,var(--teal),var(--aqua)); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .avatar svg { width: 20px; height: 20px; fill: #fff; }
+  .htitle { font-family: 'Playfair Display', serif; font-size: 13px; color: #fff; font-weight: 600; }
+  .hsub { font-size: 10px; color: var(--aqua); margin-top: 1px; font-weight: 300; }
+  .dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; margin-left: auto; flex-shrink: 0; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 2px rgba(74,222,128,.3)} 50%{box-shadow:0 0 0 5px rgba(74,222,128,.1)} }
+  .agenda-banner { background: linear-gradient(90deg,#0a1e3a,#0f4d6e); padding: 8px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(77,217,245,.2); flex-shrink: 0; }
+  .agenda-banner-text { flex: 1; }
+  .agenda-banner-text p { font-size: 10px; color: rgba(255,255,255,.75); }
+  .agenda-banner-text strong { color: var(--aqua); font-size: 10.5px; }
+  .btn-agenda-banner { background: #4ade80; color: #052e10; border: none; border-radius: 7px; padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  .btn-agenda-banner:hover { background: #22c55e; }
+  .topics { padding: 6px 10px 5px; background: #f4f9fc; border-bottom: 1px solid var(--border); display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; }
+  .tbtn { background: var(--white); border: 1px solid #c0dcea; border-radius: 20px; padding: 3px 9px; font-size: 10.5px; color: var(--teal); cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all .15s; white-space: nowrap; }
+  .tbtn:hover { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .tbtn.green { background: #f0fdf4; border-color: #86efac; color: var(--green); }
+  .tbtn.green:hover { background: var(--green); color: #fff; border-color: var(--green); }
+  .messages { flex: 1; overflow-y: auto; padding: 12px 10px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; min-height: 0; }
+  .messages::-webkit-scrollbar { width: 3px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .msg { display: flex; gap: 6px; align-items: flex-end; animation: msg-in .22s ease; }
+  @keyframes msg-in { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+  .msg.user { flex-direction: row-reverse; }
+  .mavatar { width: 24px; height: 24px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .mavatar svg { width: 12px; height: 12px; fill: #fff; }
+  .bubble { max-width: 82%; padding: 8px 11px; border-radius: 13px; font-size: 12.5px; line-height: 1.55; }
+  .msg.bot .bubble { background: var(--bg); border: 1px solid var(--border); border-bottom-left-radius: 4px; color: var(--text); }
+  .msg.user .bubble { background: var(--navy); color: #fff; border-bottom-right-radius: 4px; }
+  .agenda-card { background: linear-gradient(135deg,#f0fdf8,#e8f7f0); border: 1px solid #86efac; border-radius: 11px; padding: 11px 13px; margin-top: 6px; }
+  .agenda-card-title { font-size: 12.5px; font-weight: 500; color: #064e2a; margin-bottom: 3px; }
+  .agenda-card-sub { font-size: 11px; color: #166534; margin-bottom: 10px; line-height: 1.5; }
+  .agenda-info { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+  .agenda-info-row { font-size: 11px; color: #064e2a; }
+  .btn-pedir-hora { width: 100%; background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 12.5px; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; }
+  .btn-pedir-hora:hover { background: #15803d; }
+  .agenda-note { font-size: 10px; color: #166534; text-align: center; margin-top: 6px; }
+  .email-card { background: var(--white); border: 1px solid #b8dcea; border-radius: 11px; padding: 10px 12px; margin-top: 6px; }
+  .email-card p { font-size: 11.5px; color: var(--muted); margin-bottom: 7px; line-height: 1.5; }
+  .email-preview { background: #f4f9fc; border: 1px solid var(--border); border-radius: 7px; padding: 7px 9px; font-size: 11px; color: var(--text); margin-bottom: 8px; line-height: 1.6; }
+  .email-preview .field { color: var(--muted); font-size: 10px; }
+  .email-actions { display: flex; gap: 6px; }
+  .btn-send { flex: 1; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 7px 0; font-size: 11.5px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; }
+  .btn-send:hover { background: var(--teal2); }
+  .btn-cancel { background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; font-size: 11.5px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+  .typing-wrap { display: flex; gap: 4px; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 13px; border-bottom-left-radius: 4px; width: fit-content; }
+  .tdot { width: 5px; height: 5px; background: var(--teal); border-radius: 50%; animation: td .9s infinite; opacity: .4; }
+  .tdot:nth-child(2){animation-delay:.2s} .tdot:nth-child(3){animation-delay:.4s}
+  @keyframes td { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-4px);opacity:1} }
+  .input-area { padding: 8px 10px 10px; border-top: 1px solid var(--border); background: var(--white); flex-shrink: 0; }
+  .irow { display: flex; gap: 6px; align-items: flex-end; background: var(--bg); border: 1px solid #c0dcea; border-radius: 11px; padding: 6px 9px; transition: border-color .2s; }
+  .irow:focus-within { border-color: var(--teal); }
+  #user-input { flex: 1; background: transparent; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--text); resize: none; max-height: 60px; line-height: 1.5; }
+  #user-input::placeholder { color: #aabdca; }
+  .sbtn { background: var(--navy); border: none; border-radius: 7px; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform .18s; }
+  .sbtn:hover { transform: scale(1.08); }
+  .sbtn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  .sbtn svg { width: 14px; height: 14px; fill: #fff; }
+  .inote { text-align: center; font-size: 9.5px; color: var(--muted); margin-top: 5px; }
+</style>
+</head>
+<body>
+<div id="chat-widget">
+  <div class="chat-header">
+    <div class="hrow">
+      <div class="avatar"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+      <div><div class="htitle">Asistente Dr. Antolín Losada</div><div class="hsub">Oftalmología · Cirugías · Tratamientos · Indicaciones</div></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+  <div class="agenda-banner">
+    <div class="agenda-banner-text">
+      <strong>¿Necesita una consulta?</strong>
+      <p>Lunes a Viernes · 10:00 – 19:00 hrs</p>
+    </div>
+    <button class="btn-agenda-banner" onclick="abrirAgenda()">Pedir Hora</button>
+  </div>
+  <div class="topics">
+    <button class="tbtn green" onclick="showAgendaCard()">📅 Pedir Hora</button>
+    <button class="tbtn" onclick="quick('¿Qué es el IPL para ojo seco?')">IPL Ojo Seco</button>
+    <button class="tbtn" onclick="quick('¿Qué es el ojo seco y cómo se trata?')">Ojo Seco</button>
+    <button class="tbtn" onclick="quick('¿Qué es la catarata?')">Catarata</button>
+    <button class="tbtn" onclick="quick('¿Qué es el glaucoma?')">Glaucoma</button>
+    <button class="tbtn" onclick="quick('¿Qué es el queratocono?')">Queratocono</button>
+    <button class="tbtn" onclick="quick('¿Qué es la oculoplástica?')">Oculoplástica</button>
+    <button class="tbtn" onclick="quick('¿Qué es la ptosis palpebral?')">Ptosis palpebral</button>
+    <button class="tbtn" onclick="quick('¿Qué es la presbicia y cómo se corrige?')">Presbicia</button>
+    <button class="tbtn" onclick="quick('¿Qué debo saber del LASIK?')">LASIK</button>
+    <button class="tbtn" onclick="quick('Mi bebé tiene lagrimeo constante, ¿qué puede ser?')">Lagrimeo bebés</button>
+    <button class="tbtn" onclick="quick('Tengo ojo rojo, ¿qué puede ser?')">Ojo rojo</button>
+    <button class="tbtn" onclick="quick('¿Cómo me preparo para mi cirugía?')">Prep. cirugía</button>
+    <button class="tbtn" onclick="quick('¿Cómo aplicar colirios correctamente?')">Colirios</button>
+    <button class="tbtn" onclick="quick('¿Qué es la retinopatía diabética?')">Diabetes ocular</button>
+  </div>
+  <div class="messages" id="msgs">
+    <div class="msg bot">
+      <div class="mavatar"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-1.34-3-3-3z"/></svg></div>
+      <div class="bubble">Hola, soy el asistente del Dr. Antolín Losada. Puedo orientarte sobre enfermedades oculares, tratamientos, cirugías e indicaciones. ¿En qué puedo ayudarte?</div>
+    </div>
+  </div>
+  <div class="input-area">
+    <div class="irow">
+      <textarea id="user-input" rows="1" placeholder="Escribe tu consulta..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="sbtn" id="sbtn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="inote">Informativo — no reemplaza la consulta médica presencial con el Dr. Losada</div>
+  </div>
+</div>
+
+<script>
+// API Key guardada de forma segura en el servidor Netlify
+const AGENDA_URL = 'https://drlosada.medinetapp.com/agendaweb/planned/';
+
+let isLoading = false;
+const history = [];
+
+const BLOG_KNOWLEDGE = `
+=== BLOG DEL DR. ANTOLÍN LOSADA (drlosada.blogspot.com) ===
+
+OJO SECO (artículo del Dr. Losada):
+El ojo seco es la alteración de la película lagrimal. La lágrima es fundamental para la función visual: si falla aparecen ojo rojo, lagrimeo, sensación de arena y dolor. Si persiste puede generar úlceras, pannus (cicatrices vascularizadas) y pérdida de visión.
+Causas: múltiples. Lo más frecuente es que la lágrima disminuya con la edad (más en mujeres en menopausia), alergias y contaminación ambiental.
+Síntomas: ojo rojo, sensación de cuerpo extraño que empeora con el uso de pantallas y el aire acondicionado. A veces el paciente ve "brumoso" y lo atribuye erróneamente a exceso de lágrimas.
+Diagnóstico en consulta: el oftalmólogo evalúa la altura del menisco lagrimal, el tiempo de ruptura de la película lagrimal y el estado de la superficie ocular. Exámenes complementarios disponibles: Test Automatizado de Tiempo de Ruptura de la Película Lagrimal, Meibografía (evaluación de glándulas de Meibomio), Test de Demodex, determinación de osmolaridad lagrimal, determinación de inmunoglobulinas inflamatorias (Inflamma).
+Tipos: EVAPORATIVO (predomina la evaporación) e HIPOSECRETOR (predomina la falta de producción lagrimal).
+Tratamiento: prevención (ambientes limpios, sin humo, maquillaje de calidad y en poca cantidad, buena alimentación con frutas y verduras). Según el tipo: lágrimas artificiales, antiinflamatorios, complejos vitamínicos, probióticos, medios físicos (compresas calientes húmedas o secas). IPL (luz pulsada) demostrada útil. Equipos como Lipiflow (calor y compresión) o Resono (Modulación de la Cicatrización por Resonancia Modulada).
+IMPORTANTE: Evitar comprar gotas descongestivas para el ojo rojo — la mayoría contiene sustancias tóxicas para el ojo.
+
+QUERATOCONO Y ECTASIA CORNEAL (artículo del Dr. Losada):
+El queratocono es una enfermedad de la córnea con pérdida progresiva de fibras de colágeno, deformación y pérdida de capacidades ópticas.
+Ectasia corneal: enfermedades que provocan adelgazamiento corneal progresivo. Las más frecuentes: ectasia post-LASIK y degeneración pelúcida.
+Diagnóstico: examen clínico + Topografía Corneal Computarizada + OCT de polo anterior.
+Tratamientos actuales:
+1. Lentes de contacto semirígidos (primera línea).
+2. Anillos intraestromales (de Ferrara): mejoran la tolerancia a lentes de contacto y aparentemente disminuyen la progresión.
+3. Crosslinking corneal (CXL o ECV): endurecimiento con Riboflavina activada con luz ultravioleta. Desarrollado por los Drs. Wollansek, Seiler y colaboradores. Establece enlaces en las fibras de colágeno aumentando su dureza.
+4. Trasplante corneal lamelar (no penetrante): la opción preferida actualmente cuando otros tratamientos fallan.
+Si le diagnosticaron QC o ectasia: discutir alternativas con un oftalmólogo con experiencia en estas técnicas.
+
+GLAUCOMA — Diagnóstico (artículo del Dr. Losada):
+Según la OMS, el glaucoma es una de las enfermedades que más compromete la calidad de vida y su costo anual de tratamiento puede superar los USD 1.000.
+El Dr. Losada dispone de tecnología de diagnóstico precoz del glaucoma:
+- Campimetría de doble frecuencia (tecnología Zeiss/Humphrey - Matrix): mejora la pesquisa y diagnóstico del glaucoma permitiendo tratarlo antes de que cause daño visible. Se basa en el daño selectivo sobre células ganglionares especiales de la retina. Examen amigable, de corta duración y costo equivalente a una campimetría normal.
+- OCT (Tomografía de Coherencia Óptica): permite evaluar el espesor de la capa de fibras nerviosas de la retina y el nervio óptico con altísima precisión, detectando daño glaucomatoso antes de que aparezcan síntomas o alteraciones en el campo visual.
+El uso combinado de campimetría de doble frecuencia + OCT + examen topográfico de la papila aumenta considerablemente la capacidad de diagnóstico precoz del glaucoma.
+
+CIRUGÍA REFRACTIVA OPTIMIZADA (artículo del Dr. Losada):
+La corrección de defectos de refracción (miopía, astigmatismo, hipermetropía) puede realizarse con:
+- Láser excimer: LASIK, LASEK, PRK.
+- Técnicas complementarias: incisiones relajantes limbares (IRL), lentes intraoculares fáquicos (ICL prescristaliniano, Artisán iridiano), queratoplastia conductiva (CK), lentes multifocales intraoculares, recambio lenticular, lentes intraestromales.
+La cirugía OPTIMIZADA integra la cirugía láser personalizada con un arsenal de correcciones posibles para mejorar resultados y disminuir complicaciones según las necesidades y circunstancias biológicas únicas de cada paciente.
+El profesional más capacitado para asesorar es el médico oftalmólogo, especialmente si participa activamente en sociedades médicas y de especialidad.
+
+LO QUE DEBO SABER DEL LASIK (artículo del Dr. Losada):
+El LASIK permite corregir gran parte de los defectos visuales moderados (miopía, astigmatismo, hipermetropía).
+Para la presbicia: la cirugía existente mejora la dependencia de anteojos pero no la suprime. Debe indicarse con restricciones y tras discusión extensa de los efectos.
+Factores a considerar: estilo de vida (vida física activa/pasiva), trabajo, expectativas, actividades nocturnas.
+
+OCULOPLÁSTICA (artículo del Dr. Losada):
+Subespecialidad que se preocupa de las alteraciones de párpados, órbita y vía lagrimal. El Dr. Losada es cirujano oculoplástico con membresía en la Sociedad Chilena de Oculoplástica y la Sociedad Iberoamericana de Oculoplástica.
+Cirugías más comunes:
+1. Ectropión y entropión palpebrales: alteraciones en la posición del párpado (evertido o invertido). Pueden ser adquiridos o congénitos. Causan inflamación ocular.
+2. Ptosis palpebral: caída de uno o ambos párpados con disminución de la hendidura palpebral. Puede ser congénita (alteración del músculo elevador) o adquirida (neurológica, mecánica por desinserción de la aponeurosis, o secundaria a tumores palpebrales). Tratamiento quirúrgico cuando compromete la función visual.
+3. Tumores orbitarios: primarios (originados en la órbita) o metastásicos. Tratamiento quirúrgico.
+4. Cirugía estética oculopalpebral: blefaroplastia (corrección de bolsas palpebrales), toxina botulínica (disminuye líneas de expresión), rellenos con ácido hialurónico o colágeno (recuperan volumen perdido con la edad). Los cambios involutivos del envejecimiento convierten el rostro de forma V a forma U por pérdida de volumen en tercios medio y superior.
+
+BLEFAROPLASTIA (artículo del Dr. Losada):
+Cirugía correctora de bolsas palpebrales. Las incisiones se realizan a través de líneas naturales de la piel y la conjuntiva para minimizar cicatrices.
+Postoperatorio: estadía corta en clínica. En casa: sentarse (no agacharse), compresas frías las primeras horas. No fumar al menos 10 días antes ni después. Analgésico suave. La hinchazón disminuye progresivamente.
+Sutura: los puntos se retiran entre 4 y 7 días.
+Precauciones: suspender analgésicos y anticoagulantes 10 días antes. Usar pantalla solar después.
+Puede complementarse con dermoabrasión (arrugas comisurales) y botox.
+
+PRESBICIA Y MULTIFOCALIDAD (artículo del Dr. Losada):
+La presbicia (vista cansada) es la pérdida progresiva de la capacidad de acomodación con visión borrosa en distancias cercanas. Aumenta con la edad y no tiene cura definitiva.
+Lentes intraoculares multifocales:
+- Refractivos: diferentes zonas ópticas para distintas distancias. Ej: Rezoom (AMO), LIO Rayner.
+- Difractivos: aprovechan el fenómeno de difracción. Ej: Tecnis (Abbott), Acrylisa.
+- Mixtos: centro difractivo + periferia refractiva. Ej: Restor (Alcon).
+Todos los lentes multifocales reducen la luz que forma la imagen y aumentan la luz difusa (glare). Pueden producir halos y disminución de sensibilidad al contraste.
+Cirugía corneal para presbicia: visión monocular (un ojo para lejos, otro para cerca), multifocalidad corneal (Intracore, PresbyLASIK, PresbyMAX de Schwind), implante intracorneal (Kamra/Acufocus, Presbilens).
+NINGÚN método resuelve el problema básico de la presbicia. Para indicar cirugía se debe ser muy criterioso. Un especialista en cirugía refractiva puede ayudar a tomar la decisión.
+
+PTOSIS PALPEBRAL (artículo del Dr. Losada):
+Caída de los párpados con apertura insuficiente.
+Tipos:
+- Congénitas: desde el nacimiento, por alteración del desarrollo del músculo elevador.
+- Adquiridas: neurológicas (alteración de inervación), mecánicas (desinserción de la aponeurosis del elevador), o secundarias a tumores palpebrales.
+Tratamiento: quirúrgico, conveniente realizarlo siempre que comprometa la función visual.
+
+LAGRIMEO EN NIÑOS / OBSTRUCCIÓN NASOLAGRIMAL (artículo del Dr. Losada):
+La obstrucción del conducto nasolagrimal es frecuente en lactantes (hasta 1/3 de los bebés). Más del 90% se resuelve alrededor del primer año sin tratamiento o con tratamiento sencillo.
+El Dr. Losada realiza canaliculoplastía con balón para el tratamiento de estas obstrucciones.
+Signos: lagrimeo excesivo (epífora) sin llanto, pus en la comisura, legañas al despertar.
+Complicación: dacriocistitis (infección del saco lagrimal): enrojecimiento + hinchazón + molestia en comisura interna.
+Dacriocistocele: saco lagrimal hinchado al nacer (abultamiento azul). Se puede tratar con masaje firme + antibióticos tópicos. No siempre requiere cirugía.
+Tratamiento: masaje del saco lagrimal, sondaje cuando corresponde, canaliculoplastía con balón, DCR (dacriocistorrinostomía) en obstrucciones más complejas.
+
+HIPERTIROIDISMO Y OFTALMOPATÍA TIROIDEA (artículo del Dr. Losada):
+La Enfermedad de Graves-Basedow es una alteración autoinmune con anticuerpos contra el receptor de TSH. Causa bocio difuso, hipertiroidismo, oftalmopatía infiltrativa y ocasionalmente dermopatía.
+Prevalencia: 1-2 casos por 1.000 por año. Predominio femenino (7-10:1 antes de los 45 años).
+Afectación ocular: retracción palpebral (30-45% de casos), exoftalmos (proptosis), estrabismo (diplopia por compromiso de músculos rectos inferior e interno principalmente), irritación ocular.
+Diagnóstico: TRABS (anticuerpos contra receptor de TSH) presentes en el 90% de los casos. TAC orbital confirma en 90% de los casos con signos clínicos.
+Tratamiento: lubricantes + hipertensores oculares + selenio oral (estimula regresión) + inmunosupresores (corticoides principalmente). Rituximab como anticuerpo de síntesis con resultados promisorios.
+Cirugía: indicada para evitar daño ocular, restablecer función palpebral, tratar diplopía y mejorar apariencia (solo cuando la enfermedad está inactiva). Siempre en ese orden.
+`;
+
+const CLINICAL_KNOWLEDGE = `
+=== CONOCIMIENTO CLÍNICO OFTALMOLÓGICO (Guiones de Oftalmología, 2ª ed.) ===
+
+CATARATAS: Primera causa de ceguera reversible. Opacidad del cristalino.
+Síntomas: visión borrosa progresiva, halos, mala visión nocturna, colores apagados, fotofobia, visión doble monocular.
+Tipos: nucleares (más frecuentes), corticales, subcapsulares posteriores (más impacto visual, frecuentes en jóvenes/corticoides).
+Causas: senil (más frecuente), traumática, por corticoides, metabólica (diabetes 5x más frecuente), congénita, secundaria a uveítis/miopía/glaucoma.
+Indicación quirúrgica: cuando interfiere con actividades de la vida diaria. Técnica: facoemulsificación con lente intraocular.
+Complicaciones postquirúrgicas: opacificación de cápsula posterior, edema corneal, endoftalmitis, desprendimiento de retina.
+
+GLAUCOMA CRÓNICO SIMPLE (GPAA): Segunda causa de ceguera mundial. SILENTE hasta fases avanzadas.
+Fisiopatología: aumento PIO → daño nervio óptico → pérdida irreversible de campo visual periférico.
+Factores de riesgo: PIO elevada, edad, raza negra, AF, miopía, córnea delgada.
+Diagnóstico disponible en el consultorio Dr. Losada:
+- Tonometría (PIO normal 10-21 mmHg) y paquimetría corneal
+- OCT (Tomografía de Coherencia Óptica): mide el espesor de fibras nerviosas de la retina y del nervio óptico con alta precisión. Detecta daño antes de que aparezcan síntomas.
+- Campimetría de doble frecuencia (Matrix/Zeiss): pesquisa y diagnóstico precoz del glaucoma. Detecta daño en células ganglionares especiales antes que la campimetría convencional.
+- Examen topográfico de la papila óptica.
+El uso combinado de OCT + campimetría de doble frecuencia + topografía de papila permite el diagnóstico más precoz posible.
+Tratamiento: colirios hipotensores, trabeculoplastia láser SLT, trabeculectomía. Timolol: cuidado en asma/EPOC.
+
+GLAUCOMA AGUDO (crisis de ángulo cerrado): URGENCIA. Dolor ocular muy intenso ("dolor de clavo"), visión borrosa, halos de colores, náuseas/vómitos, ojo rojo, pupila en midriasis media arreactiva.
+Tratamiento urgente: hipotensores tópicos + acetazolamida + pilocarpina. Definitivo: iridotomía láser (también ojo contralateral profiláctico).
+
+OJO ROJO — DIAGNÓSTICO DIFERENCIAL:
+Inyección conjuntival (superficial, desaparece con vasoconstrictores) → proceso banal.
+Inyección ciliar (anillo fijo alrededor de la córnea, NO desaparece) → PROCESO GRAVE. URGENCIA.
+Signos de alarma → derivar urgente: dolor, pérdida de visión, inyección ciliar, pupila anormal, opacidad corneal, traumatismo, fotofobia intensa.
+
+CONJUNTIVITIS: Bacteriana (secreción purulenta, antibiótico tópico). Viral (acuosa, adenopatía, NO antibiótico, contagiosa). Alérgica (prurito intenso, antihistamínicos tópicos). Neonatal: URGENCIA.
+
+SÍNDROME DE OJO SECO: Tipos: deficiencia acuosa (Sjögren, medicamentos) y evaporativo (DGM, blefaritis, pantallas — 75% de casos).
+Tratamiento: lágrimas artificiales sin conservantes → higiene palpebral + compresas tibias → ciclosporina → tapones lagrimales → IPL → suero autólogo.
+
+PATOLOGÍA CORNEAL: Queratitis herpética: úlcera dendrítica, aciclovir, NUNCA corticoides solos. Úlcera bacteriana: URGENCIA, antibiótico. Queratitis actínica: AINE, oclusión.
+NUNCA anestésico tópico domiciliario.
+
+UVEÍTIS ANTERIOR: dolor + fotofobia + inyección ciliar. Corticoides tópicos + midriáticos. Derivar siempre.
+
+TRAUMATISMOS: Signos de perforación → NO presión, protector rígido, derivar urgente. Quemadura química: lavar SSF ≥30 min INMEDIATAMENTE. Álcalis peores que ácidos.
+
+DIABETES OCULAR: 50-80x más riesgo de ceguera. Retinopatía diabética: principal causa de ceguera en edad laboral. Screening: DM2 desde diagnóstico, DM1 desde 5 años. Anual si sin lesiones.
+
+FARMACOLOGÍA OCULAR:
+Técnica colirios: lavar manos → 1 gota fondo de saco → cerrar ojo 1-2 min (comprimir punto lagrimal) → esperar 5 min entre colirios.
+Corticoides tópicos: EA: glaucoma corticoideo, catarata subcapsular posterior. NUNCA sin diagnóstico.
+Timolol: EA sistémicos: bradicardia, broncoespasmo.
+Lágrimas artificiales: sin conservantes si uso >4x/día.
+Anestésicos tópicos: SOLO USO MÉDICO.
+`;
+
+const CLINIC_KNOWLEDGE = `
+=== PROTOCOLOS CONSULTORIO DR. ANTOLÍN LOSADA ===
+Dirección: Los Acantos 1137, Vitacura, Santiago | Tel: +56-9-53703567
+Horario: Lunes a Viernes 10:00-19:00 | Web: www.drlosada.cl | Email: cirugias@drlosada.cl
+Agenda: https://drlosada.medinetapp.com/agendaweb/planned/
+
+IPL (LUZ PULSADA INTENSA) — Equipo Eye Light: actúa sobre la CAUSA del ojo seco evaporativo.
+Indicaciones: DGM, ojo seco evaporativo, blefaritis, rosácea ocular, chalazión, Demodex, edema post cirugía.
+Sesión: gel + gafas + pulsos periocular. 10-15 min. Indoloro. Vida normal inmediata.
+Protocolo: 3-4 sesiones. Día 1 → 15 → 45 → 75. Resultados 6-12 meses. Mantención anual.
+Contraindicaciones: embarazo, fotosensibilidad, medicamentos fotosensibilizantes, piel bronceada, epilepsia fotosensible.
+
+PREDNISONA ORAL: Con desayuno o almuerzo. Nunca en ayunas ni de noche. Puede dividirse: desayuno + almuerzo. No suspender abruptamente.
+
+INDICACIONES PREOPERATORIAS: Ayuno 8 hrs. Informar anticoagulantes. Sin maquillaje/joyas. Acompañante adulto. Traer cédula + consentimiento + exámenes. Avisar fiebre.
+
+CATARATA: Dilatación EN LA CLÍNICA. Suspender aspirina/paracetamol 1 semana antes.
+Post op: Zypred 5x/día 10 días, Zebesten 15 días. Acetazolamida solo si Dr. Losada lo indica.
+Controles: 72 hrs, 1 semana, 1 mes.
+
+TRABECULOPLASTIA LÁSER SLT: Trata glaucoma. No cura definitiva. Nueva aplicación a los 4 años.
+IRIDOTOMÍA LÁSER: Previene glaucoma agudo. Puede requerir más de una sesión.
+CROSSLINKING: Endurece córnea para queratocono y ectasia.
+LASEK: Recuperación 10-15 días. Corticoides tópicos varios meses, lentes de sol 3 meses.
+CIRUGÍA TUMOR PÁRPADO: Extirpación + biopsia. Anestesia local + sedación.
+DCR: Obstrucción lagrimal. Suspender aspirina/ibuprofeno 2 semanas antes.
+EVISCERACIÓN: Extracción del contenido del ojo + prótesis.
+INYECCIÓN INTRAVÍTREA DE TRIAMCINOLONA: Para edema macular. Riesgos: alza PIO, catarata, endoftalmitis.
+TOCILIZUMAB: Para orbitopatía tiroidea refractaria. Uso off-label.
+`;
+
+const SYSTEM = `Eres el asistente virtual del consultorio del Dr. Antolín Losada, oftalmólogo especialista en órbita, oculoplástica y cirugía refractiva, con consulta en Los Acantos 1137, Vitacura, Santiago de Chile. Tel: +56-9-53703567. Horario: lunes a viernes 10:00-19:00.
+
+Dispones de tres fuentes de conocimiento:
+
+1) BLOG DEL DR. LOSADA (artículos en su voz, con su visión clínica personal):
+${BLOG_KNOWLEDGE}
+
+2) CONOCIMIENTO CLÍNICO GENERAL DE OFTALMOLOGÍA:
+${CLINICAL_KNOWLEDGE}
+
+3) PROTOCOLOS ESPECÍFICOS DEL CONSULTORIO:
+${CLINIC_KNOWLEDGE}
+
+REGLAS:
+- Usa SIEMPRE las tres fuentes cuando sean relevantes. El blog del Dr. Losada tiene prioridad sobre conocimiento general cuando traten el mismo tema.
+- Respuestas claras y concisas (máx 200 palabras). Viñetas con •. Sin asteriscos ni markdown.
+- Si preguntan por agendar, pedir hora, cita o consulta presencial → responde SOLO: AGENDA
+- Si no tienes información suficiente → responde SOLO: NO_SE
+- NUNCA diagnostiques ni prescribas. Recuerda siempre consultar al Dr. Losada.
+- EMERGENCIAS (pérdida súbita de visión, trauma, dolor intenso, quemadura química): urgencias oftalmológicas de inmediato.`;
+
+const DEMO = {
+  ipl: "El IPL (Luz Pulsada Intensa) es un tratamiento disponible en nuestro consultorio con el equipo Eye Light.\n\nSegún el Dr. Losada, actúa estimulando las glándulas de Meibomio y reduciendo la inflamación palpebral. Es útil especialmente en ojo seco evaporativo, blefaritis y rosácea ocular.\n\nSesiones de 10-15 min, completamente indoloras. Se puede retomar la vida normal de inmediato.\n\nTambién disponemos de equipos complementarios como Lipiflow y Resono.",
+  ojo_seco: "El ojo seco es la alteración de la película lagrimal. Síntomas: ojo rojo, lagrimeo, sensación de arena, visión brumosa que empeora con pantallas y aire acondicionado.\n\nDiagnóstico en consulta con Test de Ruptura Lagrimal, Meibografía, Test de Demodex y determinación de osmolaridad.\n\nTratamiento según el tipo:\n• Evaporativo: compresas calientes, higiene palpebral, IPL\n• Hiposecretor: lágrimas artificiales, ciclosporina\n\nEvitar gotas descongestivas: contienen sustancias tóxicas para el ojo.",
+  queratocono: "El queratocono es una deformación progresiva de la córnea con pérdida de fibras de colágeno. El Dr. Losada tiene experiencia en su tratamiento.\n\nOpciones disponibles:\n• Lentes de contacto semirígidos\n• Anillos intraestromales (de Ferrara)\n• Crosslinking corneal (endurecimiento con Riboflavina + UV)\n• Trasplante corneal lamelar\n\nDiagnóstico con Topografía Corneal + OCT de polo anterior.\n\nConsulte al Dr. Losada para evaluar la mejor opción según su caso.",
+  oculoplastica: "La oculoplástica es la subespecialidad del Dr. Losada que trata las alteraciones de párpados, órbita y vía lagrimal.\n\nCirugías disponibles en el consultorio:\n• Ectropión y entropión palpebrales\n• Ptosis palpebral (caída del párpado)\n• Tumores orbitarios y palpebrales\n• Blefaroplastia (bolsas palpebrales)\n• Cirugía estética con botox y rellenos\n• DCR (obstrucción lagrimal)\n\nEl Dr. Losada es miembro de la Sociedad Chilena de Oculoplástica y la Sociedad Iberoamericana de Oculoplástica.",
+  ptosis: "La ptosis palpebral es la caída de uno o ambos párpados con apertura insuficiente.\n\nPuede ser:\n• Congénita: desde el nacimiento, por alteración del músculo elevador\n• Adquirida: neurológica, mecánica (desinserción de la aponeurosis) o secundaria a tumores\n\nEl tratamiento es quirúrgico y se recomienda realizarlo cuando compromete la función visual.\n\nConsulte al Dr. Losada para evaluación.",
+  presbicia: "La presbicia (vista cansada) es la pérdida progresiva de la capacidad de enfocar de cerca. Aumenta con la edad y no tiene cura definitiva.\n\nOpciones de corrección quirúrgica:\n• Lentes intraoculares multifocales (refractivos, difractivos o mixtos)\n• Visión monocular (un ojo para lejos, otro para cerca)\n• PresbyMAX u otros procedimientos corneales\n\nNingún método es perfecto: todos sacrifican algo de calidad visual. La indicación debe ser muy cuidadosa.\n\nConsulte al Dr. Losada para evaluar la mejor opción.",
+  lasik: "El LASIK permite corregir miopía, astigmatismo e hipermetropía con láser excimer.\n\nEl Dr. Losada realiza cirugía refractiva OPTIMIZADA, integrando el láser personalizado con técnicas complementarias según las necesidades de cada paciente.\n\nFactores a considerar: estilo de vida, trabajo, actividades nocturnas y expectativas.\n\nPara presbicia, el LASIK mejora la dependencia de anteojos pero no la elimina completamente.\n\nConsulte al Dr. Losada para evaluar si es candidato.",
+  lagrimeo: "El lagrimeo constante en bebés suele deberse a obstrucción del conducto nasolagrimal. Es muy frecuente: hasta 1 de cada 3 bebés nace con este problema.\n\nBuenas noticias: más del 90% se resuelve solo antes del primer año de vida.\n\nSeñales de alerta: pus en la comisura, legañas al despertar, hinchazón entre el ojo y la nariz (dacriocistitis).\n\nEl Dr. Losada realiza canaliculoplastía con balón y DCR para casos que requieren tratamiento.\n\nConsulte pronto para evaluar el caso.",
+  catarata: "La catarata es la primera causa de ceguera reversible en el mundo. Es el oscurecimiento del cristalino.\n\nSíntomas: visión borrosa progresiva, halos alrededor de luces, colores apagados, mala visión nocturna.\n\nPreparación cirugía en Dr. Losada:\n• Suspender aspirina/paracetamol 1 semana antes\n• La dilatación se realiza EN LA CLÍNICA\n• Continuar medicamentos habituales\n\nPost op: Zypred 5x/día 10 días, Zebesten 15 días.\nControles: 72 hrs, 1 semana, 1 mes.",
+  glaucoma: "El glaucoma crónico es la 2ª causa de ceguera mundial. Es silente: sin síntomas hasta fases avanzadas.\n\nEl Dr. Losada dispone de tecnología de diagnóstico PRECOZ:\n• OCT: mide el espesor de fibras nerviosas con alta precisión\n• Campimetría de doble frecuencia (Zeiss Matrix): detecta daño antes que la campimetría convencional\n• Topografía de la papila óptica\n\nTratamiento: colirios hipotensores + trabeculoplastia láser SLT + cirugía si es necesario.\n\nEl glaucoma agudo es una URGENCIA: dolor intenso + halos + vómitos → urgencias.",
+  colirios: "Técnica correcta de aplicación de colirios:\n\n• Lavar las manos\n• Inclinar la cabeza hacia atrás\n• Jalar el párpado inferior\n• Instilar 1 gota en el fondo de saco\n• Cerrar el ojo 1-2 minutos (comprimir el punto lagrimal)\n• Esperar 5 minutos entre colirios distintos\n\nNunca use anestésicos tópicos en casa: son tóxicos para la córnea con uso repetido.\nEvite gotas descongestivas para ojo rojo: contienen sustancias tóxicas.",
+  diabetes: "Los diabéticos tienen 50-80 veces más riesgo de ceguera.\n\nComplicaciones oculares principales:\n• Catarata: 5x más frecuente, aparece antes\n• Glaucoma: mayor riesgo\n• Retinopatía diabética: principal causa de ceguera en edad laboral\n\nRevisión de fondo de ojo:\n• DM tipo 2: desde el diagnóstico\n• DM tipo 1: desde los 5 años de diagnóstico\n• Anual si no hay lesiones",
+  prep: "Preparación para su cirugía con el Dr. Losada:\n\n• Ayuno 8 horas antes\n• Sin maquillaje, cremas ni joyas\n• Ropa cómoda, sin lentes de contacto\n• Acompañante adulto obligatorio\n• Traer cédula, consentimiento firmado y exámenes\n• Informar si toma anticoagulantes\n• Avisar si tiene fiebre",
+};
+
+function getDemoReply(q) {
+  const ql = q.toLowerCase();
+  if (ql.includes('hora') || ql.includes('cita') || ql.includes('agenda') || ql.includes('reserva') || ql.includes('turno')) return 'AGENDA';
+  if (ql.includes('ipl') || (ql.includes('luz pulsada'))) return DEMO.ipl;
+  if (ql.includes('ojo seco') || ql.includes('meibomio') || ql.includes('blefaritis')) return DEMO.ojo_seco;
+  if (ql.includes('queratocono') || ql.includes('ectasia')) return DEMO.queratocono;
+  if (ql.includes('oculoplás') || ql.includes('oculoplas')) return DEMO.oculoplastica;
+  if (ql.includes('ptosis') || ql.includes('ptósis') || ql.includes('párpado caído') || ql.includes('parpado caido')) return DEMO.ptosis;
+  if (ql.includes('presbicia') || ql.includes('vista cansada') || ql.includes('multifocal')) return DEMO.presbicia;
+  if (ql.includes('lasik') || ql.includes('refractiv') || ql.includes('miopía') || ql.includes('miopia')) return DEMO.lasik;
+  if (ql.includes('lagrimeo') || ql.includes('bebé') || ql.includes('bebe') || ql.includes('niño') || ql.includes('nasolagrim')) return DEMO.lagrimeo;
+  if (ql.includes('catarata')) return DEMO.catarata;
+  if (ql.includes('glaucoma')) return DEMO.glaucoma;
+  if (ql.includes('colirio') || ql.includes('gota') || (ql.includes('cómo') && ql.includes('aplic'))) return DEMO.colirios;
+  if (ql.includes('diabet') || ql.includes('retinopatía')) return DEMO.diabetes;
+  if (ql.includes('prepar') || ql.includes('cirug')) return DEMO.prep;
+  if (ql.includes('trabec')) return "La Trabeculoplastia Láser SLT trata el glaucoma bajando la presión intraocular. No es cura definitiva. La mayoría requiere nueva aplicación a los 4 años.";
+  if (ql.includes('crosslink')) return "El Crosslinking corneal endurece la córnea con Riboflavina y luz UV. Disponible en el consultorio para tratar el queratocono y la ectasia corneal.";
+  if (ql.includes('blefaroplastia') || ql.includes('bolsas palpebrales')) return "La blefaroplastia corrige las bolsas palpebrales. El Dr. Losada puede complementarla con dermoabrasión y botox. Suspender anticoagulantes 10 días antes.";
+  if (ql.includes('tiroides') || ql.includes('graves') || ql.includes('exoftalmos') || ql.includes('orbitopatía')) return "La Oftalmopatía Tiroidea (Enfermedad de Graves) causa exoftalmos, retracción palpebral y diplopía. El Dr. Losada coordina el tratamiento con el endocrinólogo. Tratamiento: lubricantes, selenio, corticoides, tocilizumab. Cirugía cuando la enfermedad está inactiva.";
+  if (ql.includes('dcr') || ql.includes('dacriocist') || ql.includes('lagrim') && ql.includes('obst')) return "La DCR corrige la obstrucción de las vías lagrimales que causa lagrimeo y conjuntivitis de repetición. Suspender aspirina e ibuprofeno 2 semanas antes.";
+  return 'NO_SE';
+}
+
+const BOT_ICON = `<div class="mavatar"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>`;
+
+function addMsg(type, text) {
+  const c = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg ' + type;
+  d.innerHTML = (type === 'bot' ? BOT_ICON : '') + `<div class="bubble">${text.replace(/\n/g,'<br>')}</div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function addBotCard(html) {
+  const c = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  d.innerHTML = BOT_ICON + `<div class="bubble">${html}</div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function showTyping() {
+  const c = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg bot'; d.id = 'typing';
+  d.innerHTML = BOT_ICON + `<div class="typing-wrap"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function removeTyping() { document.getElementById('typing')?.remove(); }
+function setLoad(v) { isLoading = v; document.getElementById('sbtn').disabled = v; }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 60) + 'px'; }
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function quick(t) { document.getElementById('user-input').value = t; sendMessage(); }
+function abrirAgenda() { window.open(AGENDA_URL, '_blank'); }
+
+function showAgendaCard() {
+  addBotCard(`Con gusto te ayudo a agendar una hora con el Dr. Losada.
+    <div class="agenda-card">
+      <div class="agenda-card-title">📅 Agendar consulta en línea</div>
+      <div class="agenda-card-sub">Selecciona tu hora disponible en nuestra agenda online:</div>
+      <div class="agenda-info">
+        <div class="agenda-info-row">📍 Los Acantos 1137, Vitacura, Santiago</div>
+        <div class="agenda-info-row">🕐 Lunes a Viernes · 10:00 – 19:00 hrs</div>
+        <div class="agenda-info-row">📞 +56-9-53703567</div>
+      </div>
+      <button class="btn-pedir-hora" onclick="abrirAgenda()">Ir a la agenda en línea</button>
+      <div class="agenda-note">También puedes llamar al +56-9-53703567</div>
+    </div>`);
+}
+
+function showEmailCard(question) {
+  addBotCard(`No tengo esa información, pero puedo enviar tu consulta al equipo del Dr. Losada.
+    <div class="email-card">
+      <p>Se enviará a <strong>cirugias@drlosada.cl</strong>:</p>
+      <div class="email-preview">
+        <div class="field">Para:</div> cirugias@drlosada.cl<br>
+        <div class="field">Asunto:</div> Consulta desde el asistente web<br>
+        <div class="field">Mensaje:</div> ${escH(question)}
+      </div>
+      <div class="email-actions">
+        <button class="btn-send" onclick="enviarEmail('${escA(question)}',this)">Enviar consulta</button>
+        <button class="btn-cancel" onclick="cancelarEmail(this)">Cancelar</button>
+      </div>
+    </div>`);
+}
+
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escA(s) { return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+function enviarEmail(q, btn) {
+  window.open(`mailto:cirugias@drlosada.cl?subject=${encodeURIComponent('Consulta desde el asistente web')}&body=${encodeURIComponent(q)}`, '_blank');
+  btn.closest('.email-card').innerHTML = '<p style="color:#0f7fa8;font-weight:500;">✓ Se abrió su cliente de correo con la consulta lista para enviar.</p>';
+}
+function cancelarEmail(btn) {
+  btn.closest('.email-card').innerHTML = '<p style="color:var(--muted);">Cancelado.</p>';
+}
+
+async function sendMessage() {
+  const inp = document.getElementById('user-input');
+  const txt = inp.value.trim();
+  if (!txt || isLoading) return;
+  inp.value = ''; inp.style.height = 'auto';
+  addMsg('user', txt);
+  history.push({ role: 'user', content: txt });
+  showTyping(); setLoad(true);
+  try {
+    let reply;
+    if (false) { // demo desactivado - usar siempre el servidor
+      await new Promise(r => setTimeout(r, 700));
+      reply = getDemoReply(txt);
+    } else {
+      const res = await fetch('/.netlify/functions/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 600, system: SYSTEM, messages: history })
+      });
+      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `Error ${res.status}`); }
+      const data = await res.json();
+      reply = (data.content?.[0]?.text || '').trim();
+    }
+    removeTyping();
+    if (reply === 'AGENDA') {
+      history.push({ role: 'assistant', content: 'Se mostró tarjeta de agenda.' });
+      showAgendaCard();
+    } else if (reply === 'NO_SE' || reply === '') {
+      history.push({ role: 'assistant', content: 'Se ofreció enviar consulta por correo.' });
+      showEmailCard(txt);
+    } else {
+      history.push({ role: 'assistant', content: reply });
+      addMsg('bot', reply);
+    }
+  } catch(e) {
+    removeTyping();
+    addMsg('bot', 'Ocurrió un error al conectar. Llame al +56-9-53703567 o visite www.drlosada.cl');
+  }
+  setLoad(false);
+}
+</script>
+</body>
+</html>
