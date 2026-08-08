@@ -560,7 +560,7 @@ async function sendMessage() {
       });
       const data2 = await res.json().catch(()=>({}));
       if (!res.ok) { throw new Error(data2.error?.message || `Error HTTP ${res.status}`); }
-      reply = (data2.content?.[0]?.text || '').trim();
+      reply = (data2.content?.find(b => b.type === 'text')?.text || '').trim();|| '').trim();
     }
     removeTyping();
     if (reply === 'AGENDA') {
